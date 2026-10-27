@@ -34,9 +34,13 @@ public final class OverlayService extends Service {
 
     private WindowManager.LayoutParams params(int width, int height, int gravity) {
         int type = android.os.Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-        return new WindowManager.LayoutParams(width, height, type,
+        WindowManager.LayoutParams result = new WindowManager.LayoutParams(
+            width, height, 0, 0, type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT, gravity);
+            PixelFormat.TRANSLUCENT
+        );
+        result.gravity = gravity;
+        return result;
     }
 
     private TextView text(String value, int size, int color) {
