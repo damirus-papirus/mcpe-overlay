@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build MCPE Overlay
 
 on:
   workflow_dispatch:
@@ -24,19 +24,39 @@ jobs:
         with:
           packages: platform-tools
 
-      - name: Install Gradle 8.7
+      - name: Install Gradle
         run: |
           curl -fL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o "$RUNNER_TEMP/gradle.zip"
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.7/bin" >> "$GITHUB_PATH"
 
-      - name: Install Android SDK
+      - name: Install Android SDK packages
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
-      - name: Build debug APK
+      - name: Build APK
         run: gradle assembleDebug --no-daemon
 
-      - uses: actions/upload-artifact@v4
+      - name: Package Bedrock Add-On
+        run: |
+          test -f addon/MCPEOverlayBP/manifest.json
+          test -f addon/MCPEOverlayBP/scripts/main.js
+          cd addon/MCPEOverlayBP
+          zip -q -r ../../MCPEOverlay.mcpack manifest.json scripts
+          cd ../..
+          mkdir -p addon-package
+          cp MCPEOverlay.mcpack addon-package/
+          cd addon-package
+          zip -q -r ../MCPEOverlay.mcaddon MCPEOverlay.mcpack
+          cd ..
+          rm -rf addon-package
+
+      - name: Upload APK and Add-On
+        uses: actions/upload-artifact@v4
         with:
-          name: MCPEOverlay-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: MCPEOverlay-Full-Build
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            MCPEOverlay.mcpack
+            MCPEOverlay.mcaddon
+          if-no-files-found: error
+          retention-days: 30
